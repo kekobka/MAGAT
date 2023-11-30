@@ -53,6 +53,7 @@ function Movement:Activate()
                 v:acfSetActive(true)
             end
             self.active = true
+            timer.start(table.address("self"))
         end)
         hook.add("CameraDeactivated", table.address(self), function(ply)
             for k, v in next, self.engines do
@@ -63,6 +64,7 @@ function Movement:Activate()
             self.keys = {}
             self.input = {}
             self:KeyPress(ply, 0)
+            timer.pause(table.address("self"))
         end)
         timer.create("movement.fuelTank_update", 5, 0, function()
             local driver = self:GetDriver()
@@ -100,12 +102,12 @@ function Movement:Activate()
         end
         self:KeyPress(ply, key)
     end)
-
     timer.create(table.address(self), 250 / 1000, 0, function()
         if self.active then
             self:Think()
         end
     end)
+    timer.pause(table.address("self"))
 end
 function Movement:KeyPress(driver, key, pressed)
     local leftinput, rightinput = self:HandleInput(driver, key, pressed)
