@@ -1,4 +1,5 @@
----@name Modular Integrated General Armored Technology (MAGAT)
+---@name MAGAT
+--- Modular Integrated General Armored Technology
 ---@author kekobka
 ---@includedir modules
 
@@ -38,13 +39,13 @@ if SERVER then
     })
 
     Wire.InitPorts()
-    local oldprinthud = print
-    function print(...)
-        local a = Wire.GetSeat()
-        if isValid(a) and isValid(a:getDriver()) then
-            printHud(a:getDriver(), ...)
-        else
-            oldprinthud(...)
-        end
-    end
+    -- local oldprinthud = print
+    -- function print(...)
+    --     local a = Wire.GetSeat()
+    --     if isValid(a) and isValid(a:getDriver()) then
+    --         printHud(a:getDriver(), ...)
+    --     else
+    --         oldprinthud(...)
+    --     end
+    -- end
 end

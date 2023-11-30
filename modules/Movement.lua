@@ -10,7 +10,6 @@ function Movement:onPortsInit()
     if not isValid(self.Engine) then
         return
     end
-    self.Engine:acfSetActive(true)
     self.Base = Wire.GetBase()
     self.Seat = Wire.GetSeat()
     self:FindCases(self:FindLinks(self.Engine))
@@ -28,6 +27,8 @@ function Movement:initialize()
     self.links = {}
     self.engines = {}
     self.fueltanks = {}
+    self.keys = {}
+    self.input = {}
 end
 function Movement:Activate()
     if DEBUG then
@@ -48,10 +49,24 @@ function Movement:Activate()
             net.start("movement.FuelLevel")
             net.writeFloat(lvl)
             net.send(ply)
+            for k, v in next, self.engines do
+                v:acfSetActive(true)
+            end
+            self.active = true
+        end)
+        hook.add("CameraDeactivated", table.address(self), function(ply)
+            for k, v in next, self.engines do
+                v:acfSetThrottle(0)
+            end
+            self.active = false
+            self.anymove = false
+            self.keys = {}
+            self.input = {}
+            self:KeyPress(ply, 0)
         end)
         timer.create("movement.fuelTank_update", 5, 0, function()
             local driver = self:GetDriver()
-            if not isValid(driver) then
+            if not driver:isValid() then
                 return
             end
             local lvl = 0
@@ -64,67 +79,90 @@ function Movement:Activate()
             net.send(driver)
         end)
     end
-    hook.add("Think", table.address(self), function()
-        local driver = self:GetDriver()
-        if not isValid(driver) then
-            self.Engine:acfSetThrottle(0)
-            for k, v in next, self.engines do
-                v:acfSetThrottle(0)
-            end
+    self.minPower, self.maxPower = self.Engine:acfPowerband()
+    self.midPower = (self.minPower + self.maxPower) / 2
+    self.numgears = self.links.gearbox:acfNumGears()
+    hook.add("KeyPress", table.address(self), function(ply, key)
+        if not self.active then
             return
         end
-        local leftinput, rightinput = self:HandleInput(driver)
-        local input = {
-            [true] = leftinput,
-            [false] = rightinput
-        }
-        local anymove = (leftinput > 0 and true) or (rightinput > 0 and true)
-        local min, max = self.Engine:acfPowerband()
-        local midPower = (min + max) / 2
-        if not anymove then
-            self.Engine:acfSetThrottle(self.Engine:acfRPM() < midPower and 100 or 0)
-        else
-            self.Engine:acfSetThrottle(100)
+        if ply ~= Wire.GetSeat():getDriver() then
+            return
         end
-        for k, v in next, self.engines do
-            v:acfSetThrottle(self.Engine:acfGetThrottle())
+        self:KeyPress(ply, key, true)
+    end)
+    hook.add("KeyRelease", table.address(self), function(ply, key)
+        if not self.active then
+            return
         end
-        local clutch = (not anymove or self.Engine:acfRPM() < min) and 1 or 0
-        local cases = self.links.cases
-        local gbox = self.links.gearbox
-        gbox:acfClutch(0)
-        local gear = gbox:acfGear()
-        local rpm = self.Engine:acfRPM()
+        if ply ~= Wire.GetSeat():getDriver() then
+            return
+        end
+        self:KeyPress(ply, key)
+    end)
 
-        if clutch == 0 then
-            if gear == 0 then
-                gbox:acfShiftUp()
-            end
-            if rpm >= (max - 1) and gear < gbox:acfNumGears() - 1 then
-                gbox:acfShiftUp()
-            end
-            -- if self.Engine:acfRPM() >= (midPower + max) / 2 then
-            --     gbox:acfShift(math.min(gbox:acfNumGears() - 1, gbox:acfGear() + 1))
-            -- end
-        else
-            gbox:acfShiftDown()
-        end
-        for gbox, left in next, cases do
-            local i = input[left]
-            if i == 0 then
-                gbox:acfBrake(50)
-                gbox:acfClutch(1)
-            else
-                gbox:acfBrake(0)
-                gbox:acfClutch(0)
-                gbox:acfShift(i)
-            end
+    timer.create(table.address(self), 250 / 1000, 0, function()
+        if self.active then
+            self:Think()
         end
     end)
 end
-function Movement:HandleInput(driver)
-    local horizontal = (driver:keyDown(IN_KEY.MOVERIGHT) and 1 or 0) - (driver:keyDown(IN_KEY.MOVELEFT) and 1 or 0)
-    local vertical = (driver:keyDown(IN_KEY.FORWARD) and 1 or 0) - (driver:keyDown(IN_KEY.BACK) and 1 or 0)
+function Movement:KeyPress(driver, key, pressed)
+    local leftinput, rightinput = self:HandleInput(driver, key, pressed)
+    self.input = {
+        [true] = leftinput,
+        [false] = rightinput
+    }
+    self.anymove = (leftinput > 0 and true) or (rightinput > 0 and true)
+    if self.anymove then
+        for k, v in next, self.engines do
+            v:acfSetThrottle(100)
+        end
+    end
+
+    for case, left in next, self.links.cases do
+        local i = self.input[left] or 0
+        if i == 0 then
+            case:acfBrake(50)
+            case:acfClutch(1)
+        else
+            case:acfBrake(0)
+            case:acfClutch(0)
+            case:acfShift(i)
+        end
+    end
+end
+
+function Movement:Think()
+    local input = self.input
+    local anymove = self.anymove
+    local rpm = self.Engine:acfRPM()
+
+    local clutch = (not anymove or rpm < self.minPower) and 1 or 0
+    local gbox = self.links.gearbox
+
+    local gear = gbox:acfGear()
+
+    if not anymove then
+        local th = math.remap(self.Engine:acfRPM(), 0, self.midPower, 100, 30)
+        for k, v in next, self.engines do
+            v:acfSetThrottle(self.active and th or 0)
+        end
+    end
+    if clutch == 0 then
+        if gear == 0 then
+            gbox:acfShiftUp()
+        elseif rpm >= (self.maxPower - 1) and gear < self.numgears - 1 then
+            gbox:acfShiftUp()
+        end
+    else
+        gbox:acfShiftDown()
+    end
+end
+function Movement:HandleInput(driver, key, pressed)
+    self.keys[key] = pressed
+    local horizontal = (self.keys[IN_KEY.MOVERIGHT] and 1 or 0) - (self.keys[IN_KEY.MOVELEFT] and 1 or 0)
+    local vertical = (self.keys[IN_KEY.FORWARD] and 1 or 0) - (self.keys[IN_KEY.BACK] and 1 or 0)
 
     -- no movement
     if vertical == 0 and horizontal == 0 then
@@ -159,9 +197,8 @@ function Movement:HandleInput(driver)
 end
 function Movement:GetDriver()
     local seat = Wire.GetSeat()
-    if isValid(seat) then
-        local d = seat:getDriver()
-        return isValid(d) and d
+    if seat:isValid() then
+        return seat:getDriver()
     end
 end
 function Movement:FindLinks(ent, linkedto, tbl)
@@ -187,7 +224,6 @@ function Movement:FindLinks(ent, linkedto, tbl)
         end
         if wheel:acfIsEngine() then
             table.insert(self.engines, wheel)
-            wheel:acfSetActive(true)
             goto ce
         end
         links[wheel] = self:FindLinks(wheel, ent, tbl)

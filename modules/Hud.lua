@@ -139,22 +139,25 @@ if CLIENT then
     hook.add("hudshoulddraw", "Hud", function(s)
         return hide[s]
     end)
-    local speed = 0
+    local speed, lerp, plerp, lasttarget = 0, math.lerpVector, Vector()
     hook.add("drawhud", "Hud", function()
         local w, h = render.getResolution()
         local scale = 1440 / h
-        local d = target:toScreen()
+        plerp = lerp(0.1, plerp, target)
+        local d = plerp:toScreen()
         render.setRGBA(255, 255, 255, 150)
         if CAMERA_ZOOMED then
             render.setMaterial(scopeMat)
             local s = 1024 * scale
             render.drawTexturedRectFast(w / 2 - s / 2, h / 2 - s / 2, s, s)
 
-            render.setMaterial(gunScopePath)
-            render.setRGBA(255, 255, 255, 200)
-            local s = 1024 * scale
-            render.drawTexturedRectFast(d.x - s / 2, d.y - s / 2, s, s)
-
+            -- pointer
+            if d.visible then
+                render.setMaterial(gunScopePath)
+                render.setRGBA(255, 255, 255, 200)
+                local s = 1024 * scale
+                render.drawTexturedRectFast(d.x - s / 2, d.y - s / 2, s, s)
+            end
             render.setRGBA(255, 255, 255, 255)
             render.setMaterial(overlayMat)
             local s = 6000 * scale
@@ -164,9 +167,12 @@ if CLIENT then
             local s = 512 * scale
             render.drawTexturedRectFast(w / 2 - s / 2, h / 2 - s / 2, s, s)
 
-            render.setMaterial(gunMat)
-            render.setRGBA(255, 255, 255, 200)
-            render.drawTexturedRectFast(d.x - s / 2, d.y - s / 2, s, s)
+            -- pointer
+            if d.visible then
+                render.setMaterial(gunMat)
+                render.setRGBA(255, 255, 255, 200)
+                render.drawTexturedRectFast(d.x - s / 2, d.y - s / 2, s, s)
+            end
         end
 
         local cX, cY = w / 2, h - 128

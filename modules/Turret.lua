@@ -37,18 +37,7 @@ function Gun:onPortsInit()
         if ply ~= Wire.GetSeat():getDriver() then
             return
         end
-        if key == self.firekey then
-            net.start("Gun_ammo_types_update")
-            local type = ent:acfAmmoType()
-            net.writeString(type)
-            local count = self:GetAmmo(type)
-            ent:acfFire(1)
-            net.writeFloat(count)
-            self.ammotypes[type] = count
-            net.send(ply)
-        elseif key == IN_KEY.RELOAD then
-            ent:acfReload()
-        end
+        self:KeyPress(ply, key, true)
     end)
     hook.add("KeyRelease", self.name, function(ply, key)
         if ply ~= Wire.GetSeat():getDriver() then
@@ -78,6 +67,25 @@ function Gun:onPortsInit()
         printTable(self.crew)
     end
 end
+function Gun:KeyPress(ply, key, pressed)
+    if pressed then
+        local ent = self.ent
+        if key == self.firekey then
+            net.start("Gun_ammo_types_update")
+            local type = ent:acfAmmoType()
+            net.writeString(type)
+            local count = self:GetAmmo(type)
+            ent:acfFire(1)
+            if count then
+                net.writeFloat(count)
+                self.ammotypes[type] = count
+            end
+            net.send(ply)
+        elseif key == IN_KEY.RELOAD then
+            ent:acfReload()
+        end
+    end
+end
 function Gun:initialize(name, firekey, camera)
     self:listenInit()
     self.camera = camera
@@ -104,7 +112,8 @@ end
 function Gun:Activate()
     local ent = self.ent
     if self.isMain then
-        hook.add("Think", table.address(self), function()
+        timer.create(table.address(self), 0.1, 0, function()
+            -- hook.add("Think", table.address(self), function()
             local ply = Wire.GetSeat():getDriver()
             if not isValid(ply) then
                 return
@@ -182,7 +191,11 @@ function Gun:GetAmmoTypes()
 end
 function Gun:GetAmmo(type)
     local ammo = 0
-    for k, crate in next, self.ammotypesEnt[type] do
+    local ents = self.ammotypesEnt[type]
+    if not ents then
+        return
+    end
+    for k, crate in next, ents do
         ammo = ammo + crate:acfRounds()
     end
     return ammo
@@ -262,6 +275,8 @@ function Turret:initialize(base, camera, id, config)
     self.holding = false
     self.parent = base.GetBase and base:GetBase() or base
     self.guns = {}
+    self.lasthitpos = zero
+    self.lastgunpos = zero
     Wire.AddInputs({
         ["VAxis" .. id] = "Entity",
         ["HAxis" .. id] = "Entity",
@@ -269,7 +284,8 @@ function Turret:initialize(base, camera, id, config)
     })
 end
 function Turret:Activate()
-    hook.add("Think", table.address(self), function()
+    timer.create(table.address(self), 120 / 1000, 0, function()
+        -- hook.add("Think", table.address(self), function()
         self:Think()
     end)
     hook.add("KeyPress", "Turret" .. self.id, function(ply, key)
@@ -293,17 +309,17 @@ function Turret:AddGun(name, key)
     end
     self.guns[gun] = "GetGun_" .. name .. self.id
 end
+local min, abs, acos, deg, math_nlerpQuaternion = math.min, math.abs, math.acos, math.deg, math.nlerpQuaternion
 local function Quat_Angle(a, b)
     local dot = a:dot(b)
-    return dot > 1 and 0 or math.deg(math.acos(math.min(math.abs(dot), 1)) * 2)
+    return dot > 1 and 0 or deg(acos(min(abs(dot), 1)) * 2)
 end
-local min = math.min
 local function RotateTowards(from, to)
     local angle = Quat_Angle(from, to)
     if angle == 0 then
         return to
     end
-    return math.nlerpQuaternion(from, to, min(1, 2 / angle))
+    return math_nlerpQuaternion(from, to, min(1, 10 / angle))
 end
 
 local function rotate(holo, ang)
@@ -327,11 +343,14 @@ function Turret:Think()
     else
         hitpos = trace_line(EyePos, EyePos + EyeVector * 65565, nil, nil, COLLISION_GROUP.PROJECTILE).HitPos
     end
-
     local gun = self.firstgun
     local gunpos = gun:getPos()
+    if self.lasthitpos == hitpos and self.lastgunpos == gunpos then
+        return
+    end
     local Target, Reverse = gun:GetPredict(hitpos, holding_ent)
-
+    self.lasthitpos = hitpos
+    self.lastgunpos = gunpos
     local target = (Target - gunpos):getAngle()
     local HAxisHolo = self.HAxisHolo
     local VAxisHolo = self.VAxisHolo
