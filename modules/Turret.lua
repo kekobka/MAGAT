@@ -113,7 +113,6 @@ function Gun:Activate()
     local ent = self.ent
     if self.isMain then
         timer.create(table.address(self), 0.1, 0, function()
-            -- hook.add("Think", table.address(self), function()
             local ply = Wire.GetSeat():getDriver()
             if not isValid(ply) then
                 return
