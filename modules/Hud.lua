@@ -1,5 +1,5 @@
 ---@name Hud
----@client
+---@shared
 ---@author kekobka
 local OverlayPath = "https://i.imgur.com/yS9nSt2.png" -- "egpextras/textures/tank/overlays/border_circular.png" -- "https://i.imgur.com/8mZQOKL.png"
 local ScopePath = "https://i.imgur.com/eRVcanH.png" -- "egpextras/textures/tank/sights/1g46/range_table.png"
