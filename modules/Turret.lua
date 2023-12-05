@@ -29,6 +29,7 @@ local ammoPriority = {
 function Gun:onPortsInit()
     self.ent = Wire["Get" .. self.name]()
     local ent = self.ent
+    if not isValid(ent) then return end
     -- ent:getWirelink()["Fuse Time"] = 0
     -- ent:setParent(Wire.GetVAxis())
     self.selectedAmmo = ent:acfAmmoType()
