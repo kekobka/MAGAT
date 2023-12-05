@@ -154,7 +154,7 @@ function Movement:Think()
     if clutch == 0 then
         if gear == 0 then
             gbox:acfShiftUp()
-        elseif rpm >= (self.maxPower - 10) and gear < self.numgears - 1 then
+        elseif rpm >= (self.midPower + self.maxPower) / 2 and gear < self.numgears - 1 then
             gbox:acfShiftUp()
         end
     else
