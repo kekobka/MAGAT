@@ -258,7 +258,7 @@ function Turret:onPortsInit()
         ent:setParent(Vaxis)
         ent:setNocollideAll(true)
     end
-    self.parent = base.GetBase and base:GetBase() or base
+    self.parent = self._base.GetBase and self._base:GetBase() or self._base
     self:Activate()
 end
 function Turret:initialize(base, camera, id, config)
@@ -275,7 +275,7 @@ function Turret:initialize(base, camera, id, config)
     }
     self.firstgun = nil
     self.holding = false
-
+    self._base = base
     self.guns = {}
     self.lasthitpos = zero
     self.lastgunpos = zero
