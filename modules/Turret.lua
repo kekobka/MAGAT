@@ -244,6 +244,7 @@ function Turret:onPortsInit()
     if not isValid(Vaxis) or not isValid(Haxis) then
         return
     end
+    self.parent = self._base.GetBase and self._base:GetBase() or self._base
         local ang = Angle(0, -90, 0)
 
         self.HAxisHolo = hologram.create(Haxis:getPos(), ang, "models/sprops/cuboids/height06/size_1/cube_6x6x6.mdl", Vector(.2, .2, 5))
@@ -259,7 +260,6 @@ function Turret:onPortsInit()
         ent:setParent(Vaxis)
         ent:setNocollideAll(true)
     end
-    self.parent = self._base.GetBase and self._base:GetBase() or self._base
     self:Activate()
 end
 function Turret:initialize(base, camera, id, config)
