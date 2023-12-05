@@ -240,7 +240,9 @@ local Turret = class("Turret", Wire)
 function Turret:onPortsInit()
     local Vaxis = Wire["GetVAxis" .. self.id]()
     local Haxis = Wire["GetHAxis" .. self.id]()
-    if isValid(Vaxis) and isValid(Haxis) then
+    if not isValid(Vaxis) or not isValid(Haxis) then
+        return
+    end
         local ang = Angle(0, -90, 0)
 
         self.HAxisHolo = hologram.create(Haxis:getPos(), ang, "models/sprops/cuboids/height06/size_1/cube_6x6x6.mdl", Vector(.2, .2, 5))
@@ -250,12 +252,13 @@ function Turret:onPortsInit()
         self.HAxisHolo:setParent(self.parent)
         Vaxis:setParent(self.VAxisHolo)
         Haxis:setParent(self.HAxisHolo)
-    end
+    
     for gun, getter in next, self.guns do
         local ent = Wire[getter]()
         ent:setParent(Vaxis)
         ent:setNocollideAll(true)
     end
+    self.parent = base.GetBase and base:GetBase() or base
     self:Activate()
 end
 function Turret:initialize(base, camera, id, config)
@@ -272,7 +275,7 @@ function Turret:initialize(base, camera, id, config)
     }
     self.firstgun = nil
     self.holding = false
-    self.parent = base.GetBase and base:GetBase() or base
+
     self.guns = {}
     self.lasthitpos = zero
     self.lastgunpos = zero
