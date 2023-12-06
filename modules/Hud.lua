@@ -2,15 +2,24 @@
 ---@shared
 ---@author kekobka
 
-
 local Hud = class("Hud")
 if CLIENT then
+    STYPES = {
+        CANNON = 0,
+        AUTOCANNON = 1,
+        MACHINEGUN = 2
+    }
+    local STYPES_t = {
+        [0] = "",
+        [1] = "ac/",
+        [2] = "mg/"
+    }
     local OverlayPath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/overlay.png"
     local ScopePath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/table.png"
-    
+
     local FullpoinerPath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/fullpointer.png"
     local TablePath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/fulltable.png"
-    local GunPath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/pointer.png" 
+    local GunPath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/pointer.png"
 
     local activegun = 1
     local fontRoboto16 = render.createFont("Roboto", 16, 500, true, false, true, false, 0, false, 0)
@@ -160,9 +169,12 @@ if CLIENT then
                 gundata.usingAmmo = net.readString()
                 gundata.nextUsingAmmo = net.readString()
                 gundata.reloadProgress = net.readFloat()
+                gundata.type = net.readUInt(2)
+                local adder = STYPES_t[gundata.type]
                 gundata.ammotypes = {}
                 for t, count in next, usedAmmoTypes do
-                    local type = ammotypesdata[t] and "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/shelltypes/" .. t .. ".png" or ""
+                    
+                    local type = ammotypesdata[t] and "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/shelltypes/".. adder .. t .. ".png" or ""
                     if type then
                         local a = isstring(type) and getMaterial(type) or type
                         ammotypesdata[t] = a
@@ -203,7 +215,7 @@ if CLIENT then
                         render.setRGBA(255, 255, 255, 255)
                     end
                     render.drawTexturedRectFast(cX - 27 + x * 60, cY, 54, 54)
-                    render.drawSimpleText(cX + x * 60, cY, data.name, 1, 2)
+                    render.drawSimpleText(cX + x * 60, cY - 16, data.name, 1, 2)
                     render.drawSimpleText(cX + x * 60, cY + 54, data.count, 1)
                 end
                 if isactive then

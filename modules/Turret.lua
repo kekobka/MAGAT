@@ -6,6 +6,11 @@ local zero, trace_line, math_clamp = Vector(), trace.line, math.clamp
 local Gun = class("Gun", Wire)
 Gun:include(Sync)
 
+STYPES = {
+    CANNON = 0,
+    AUTOCANNON = 1,
+    MACHINEGUN = 2
+}
 local ammoPriority = {
     ["APFSDS"] = 1,
     ["APDS"] = 2,
@@ -154,7 +159,7 @@ function Gun:NetReloadStart()
     net.writeString(self.ent:acfAmmoType())
     net.send(Wire.GetSeat():getDriver())
 end
-function Gun:initialize(id, name, firekey, camera, turret)
+function Gun:initialize(id, name, firekey, camera, type, turret)
     self:listenInit()
     self.camera = camera
     self.name = "Gun_" .. name
@@ -168,7 +173,7 @@ function Gun:initialize(id, name, firekey, camera, turret)
     self.ent = entity(0)
     self.ammotypes = {}
     self.ammotypesEnt = {}
-
+    self.type = type or 0
 end
 function Gun:IsReloading()
     local this = self.ent
@@ -258,6 +263,7 @@ function Gun:GetAmmoTypes()
         net.writeString(self.ent:acfAmmoType())
         net.writeString(self.selectedAmmo)
         net.writeFloat(self.ent:acfReloadProgress())
+        net.writeUInt(self.type, 2)
         net.send(ply)
 
         net.start("Gun_update_reloading" .. self._name)
@@ -399,11 +405,11 @@ function Turret:Activate()
         end
     end)
 end
-function Turret:AddGun(name, key)
+function Turret:AddGun(name, key, type)
     local GunName = name .. self.id
     self.lastkey = key or self.lastkey
 
-    local gun = Gun(table.count(self.guns), GunName, self.lastkey, self.camera, self)
+    local gun = Gun(table.count(self.guns), GunName, self.lastkey, self.camera, type, self)
     if not self.firstgun then
         self.firstgun = gun
         gun.isMain = true

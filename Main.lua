@@ -35,8 +35,11 @@ if SERVER then
     }
 
     local turret = modules.Turret(Base, Camera, nil, turretConfig)
+
+
+    -- turret:AddGun(name? = "", fire key? = lastkey, enum STYPES? = STYPES.CANNON)
     turret:AddGun("Main", IN_KEY.ATTACK)
-    turret:AddGun("Turret", IN_KEY.ATTACK2)
+    turret:AddGun("Turret", IN_KEY.ATTACK2, STYPES.MACHINEGUN)
     
     Wire.AddInputs({
         Seat = "Entity",
@@ -48,3 +51,6 @@ if SERVER then
 
     Wire.InitPorts()
 end
+    -- STYPES.CANNON
+    -- STYPES.AUTOCANNON
+    -- STYPES.MACHINEGUN
