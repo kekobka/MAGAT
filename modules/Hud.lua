@@ -39,25 +39,25 @@ if CLIENT then
         ["SM"] = 19
     }
     local ammotypesdata = {
-        ["APFSDS"] = "https://i.imgur.com/CHm4uLw.png",
-        ["APDS"] = "https://i.imgur.com/ieWcP7i.png",
-        ["APHECBC"] = "https://i.imgur.com/xBB6ugU.png",
-        ["APHE"] = "https://i.imgur.com/frWfH8a.png",
-        ["APCBC"] = "https://i.imgur.com/ugYBTRP.png",
-        ["APC"] = "https://i.imgur.com/4qjXNsQ.png",
-        ["APBC"] = "https://i.imgur.com/cNE3tB2.png",
-        ["AP"] = "https://i.imgur.com/ZQ5AfgC.png",
-        ["APCR"] = "https://i.imgur.com/tIAgMFu.png",
-        ["GLATGM"] = "https://i.imgur.com/zJJvQ4H.png",
-        ["THEATFS"] = "https://i.imgur.com/jZGs8Wa.png",
-        ["HEATFS"] = "https://i.imgur.com/gvKLiE4.png",
-        ["THEAT"] = "https://i.imgur.com/jZGs8Wa.png",
-        ["HEAT"] = "https://i.imgur.com/M2RAqcx.png",
-        ["HEFS"] = "https://i.imgur.com/OKZLDuw.png",
-        ["HESH"] = "https://i.imgur.com/RTDacUT.png",
-        ["HE"] = "https://i.imgur.com/AYJw6b9.png",
-        ["FL"] = "https://i.imgur.com/E0NdKgw.png",
-        ["SM"] = "https://i.imgur.com/NwLC7Fh.png"
+        ["APFSDS"] = true,
+        ["APDS"] = true,
+        ["APHECBC"] = true,
+        ["APHE"] = true,
+        ["APCBC"] = true,
+        ["APC"] = true,
+        ["APBC"] = true,
+        ["AP"] = true,
+        ["APCR"] = true,
+        ["GLATGM"] = true,
+        ["THEATFS"] = true,
+        ["HEATFS"] = true,
+        ["THEAT"] = true,
+        ["HEAT"] = true,
+        ["HEFS"] = true,
+        ["HESH"] = true,
+        ["HE"] = true,
+        ["FL"] = true,
+        ["SM"] = true
     }
 
     local _materials = {}
@@ -162,7 +162,7 @@ if CLIENT then
                 gundata.reloadProgress = net.readFloat()
                 gundata.ammotypes = {}
                 for t, count in next, usedAmmoTypes do
-                    local type = ammotypesdata[t]
+                    local type = ammotypesdata[t] and "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/shelltypes/" .. t .. ".png" or ""
                     if type then
                         local a = isstring(type) and getMaterial(type) or type
                         ammotypesdata[t] = a
