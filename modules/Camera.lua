@@ -158,6 +158,8 @@ else
 
     function Camera:stop()
         ISDRIVER = false
+        CAMERA_ZOOMED = false
+        self.dist = CAMERA_DISTANCE
         hook.remove("mousemoved", "camera")
         hook.remove("mouseWheeled", "camera")
         hook.remove("inputpressed", "camera")
