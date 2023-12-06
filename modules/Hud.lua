@@ -1,15 +1,16 @@
 ---@name Hud
 ---@shared
 ---@author kekobka
-local OverlayPath = "https://i.imgur.com/yS9nSt2.png" -- "egpextras/textures/tank/overlays/border_circular.png" -- "https://i.imgur.com/8mZQOKL.png"
-local ScopePath = "https://i.imgur.com/eRVcanH.png" -- "egpextras/textures/tank/sights/1g46/range_table.png"
 
-local GunPath = "https://i.imgur.com/YM7hhoR.png" -- "egpextras/textures/tank/sights/togs/reticle_high.png"
-local TablePath = "https://i.imgur.com/pHArIuR.png" -- "egpextras/textures/tank/sights/togs/reticle_low.png"
-local GunScopePath = "https://i.imgur.com/9nmya14.png" -- "egpextras/textures/tank/sights/1g42/reticle.png"
 
 local Hud = class("Hud")
 if CLIENT then
+    local OverlayPath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/overlay.png"
+    local ScopePath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/table.png"
+    
+    local FullpoinerPath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/fullpointer.png"
+    local TablePath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/fulltable.png"
+    local GunPath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/pointer.png" 
 
     local activegun = 1
     local fontRoboto16 = render.createFont("Roboto", 16, 500, true, false, true, false, 0, false, 0)
@@ -72,9 +73,9 @@ if CLIENT then
 
     local overlayMat = getMaterial(OverlayPath)
     local scopeMat = getMaterial(ScopePath)
-    local gunMat = getMaterial(GunPath)
+    local gunMat = getMaterial(FullpoinerPath)
     local tableMat = getMaterial(TablePath)
-    local gunScopePath = getMaterial(GunScopePath)
+    local gunScopePath = getMaterial(GunPath)
 
     local iobjects = {}
     objects = objects or {}
