@@ -1,9 +1,6 @@
 ---@name Movement
 ---@server
 ---@author kekobka
----@include ../Wire.lua
-local Wire = require("../Wire.lua")
-
 local Movement = class("Movement", Wire)
 function Movement:onPortsInit()
     self.Engine = Wire.GetEngine()
@@ -39,33 +36,35 @@ function Movement:Activate()
         printTable(self.fueltanks)
     end
 
-    if #self.fueltanks > 0 then
-        hook.add("CameraActivated", table.address(self), function(ply)
-            local lvl = 0
-            for _, tank in next, self.fueltanks do
-                lvl = lvl + tank:acfFuelLevel()
-            end
+    hook.add("CameraActivated", table.address(self), function(ply)
+        local lvl = 0
+        for _, tank in next, self.fueltanks do
+            lvl = lvl + tank:acfFuelLevel()
+        end
+        if #self.fueltanks > 0 then
             lvl = lvl / #self.fueltanks
             net.start("movement.FuelLevel")
             net.writeFloat(lvl)
             net.send(ply)
-            for k, v in next, self.engines do
-                v:acfSetActive(true)
-            end
-            self.active = true
-            timer.start(table.address("self"))
-        end)
-        hook.add("CameraDeactivated", table.address(self), function(ply)
-            for k, v in next, self.engines do
-                v:acfSetThrottle(0)
-            end
-            self.active = false
-            self.anymove = false
-            self.keys = {}
-            self.input = {}
-            self:KeyPress(ply, 0)
-            timer.pause(table.address("self"))
-        end)
+        end
+        for k, v in next, self.engines do
+            v:acfSetActive(true)
+        end
+        self.active = true
+        timer.start(table.address("self"))
+    end)
+    hook.add("CameraDeactivated", table.address(self), function(ply)
+        for k, v in next, self.engines do
+            v:acfSetThrottle(0)
+        end
+        self.active = false
+        self.anymove = false
+        self.keys = {}
+        self.input = {}
+        self:KeyPress(ply, 0)
+        timer.pause(table.address("self"))
+    end)
+    if #self.fueltanks > 0 then
         timer.create("movement.fuelTank_update", 5, 0, function()
             local driver = self:GetDriver()
             if not driver:isValid() then

@@ -3,33 +3,41 @@
 ---@author kekobka
 ---@includedir modules
 
-DEBUG = false
-
-local modules = {}
+DEBUG = true
+if SERVER then
+    ---@include Wire.lua
+    Wire = require("Wire.lua")
+    ---@include Sync.lua
+    Sync = require("Sync.lua")
+end
+modules = {}
 for k, v in next, requiredir("modules") do
     modules[v.name] = v
 end
 
 if SERVER then
-    ---@include Wire.lua
-    local Wire = require("Wire.lua")
 
     local Base = modules.Movement()
     local Camera = modules.Camera()
 
     local turretConfig = {
-        depression = 15,
-        elevation = 50,
+        depression = 11,
+        elevation = 90,
         minY = 180,
         maxY = 180
     }
 
+    local turretConfigSecond = {
+        depression = 15,
+        elevation = 25,
+        minY = 0,
+        maxY = 0
+    }
+
     local turret = modules.Turret(Base, Camera, nil, turretConfig)
     turret:AddGun("Main", IN_KEY.ATTACK)
-    -- turret:AddGun("Turret", IN_KEY.ATTACK2)
+    turret:AddGun("Turret", IN_KEY.ATTACK2)
     
-    -- local turret = modules.Turret(turret, 2, turretConfig)
-    -- turret:AddGun("MachineGun", IN_KEY.ATTACK2)
     Wire.AddInputs({
         Seat = "Entity",
         Base = "Entity"
@@ -39,13 +47,4 @@ if SERVER then
     })
 
     Wire.InitPorts()
-    -- local oldprinthud = print
-    -- function print(...)
-    --     local a = Wire.GetSeat()
-    --     if isValid(a) and isValid(a:getDriver()) then
-    --         printHud(a:getDriver(), ...)
-    --     else
-    --         oldprinthud(...)
-    --     end
-    -- end
 end

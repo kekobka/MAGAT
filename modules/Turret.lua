@@ -1,10 +1,11 @@
 ---@name Turret
 ---@server
 ---@author kekobka
----@include ../Wire.lua
 local zero, trace_line, math_clamp = Vector(), trace.line, math.clamp
-local Wire = require("../Wire.lua")
+
 local Gun = class("Gun", Wire)
+Gun:include(Sync)
+
 local ammoPriority = {
     ["APFSDS"] = 1,
     ["APDS"] = 2,
@@ -26,10 +27,23 @@ local ammoPriority = {
     ["FL"] = 18,
     ["SM"] = 19
 }
+
+function Gun:onNetReady(ply)
+    if not self.selectedAmmo then
+        return
+    end
+    net.start("InitializeObject")
+    net.writeString("Gun")
+    net.writeTable({self._name})
+    net.send(ply)
+end
+
 function Gun:onPortsInit()
     self.ent = Wire["Get" .. self.name]()
     local ent = self.ent
-    if not isValid(ent) then return end
+    if not isValid(ent) then
+        return
+    end
     -- ent:getWirelink()["Fuse Time"] = 0
     -- ent:setParent(Wire.GetVAxis())
     self.selectedAmmo = ent:acfAmmoType()
@@ -44,20 +58,16 @@ function Gun:onPortsInit()
         if ply ~= Wire.GetSeat():getDriver() then
             return
         end
-        if key == self.firekey then
-            ent:acfFire(0)
-        end
+        self:KeyPress(ply, key, false)
     end)
     self:GetAmmoTypes()
-    if self.isMain then
-        net.receive("gun_ammo_change", function(_, ply)
-            if ply ~= Wire.GetSeat():getDriver() then
-                return
-            end
-            local newAmmo = net.readString()
-            self:SelectAmmo(newAmmo)
-        end)
-    end
+    net.receive("gun_ammo_change" .. self._name, function(_, ply)
+        if ply ~= Wire.GetSeat():getDriver() then
+            return
+        end
+        local newAmmo = net.readString()
+        self:SelectAmmo(newAmmo)
+    end)
     self:Activate()
     self.crew = self.ent:acfGetCrew()
     if DEBUG then
@@ -72,26 +82,86 @@ function Gun:KeyPress(ply, key, pressed)
     if pressed then
         local ent = self.ent
         if key == self.firekey then
-            net.start("Gun_ammo_types_update")
-            local type = ent:acfAmmoType()
-            net.writeString(type)
-            local count = self:GetAmmo(type)
-            ent:acfFire(1)
-            if count then
-                net.writeFloat(count)
-                self.ammotypes[type] = count
+            if self.queued then
+                if self.turret.queue ~= self.id then
+                    return
+                end
+                local maxqueue = table.count(self.turret.guns)
+                timer.simple(0, function()
+                    self.turret.queue = self.turret.queue % maxqueue + 1
+                end)
+                self:Fire()
+                timer.create(table.address(self), 60 / self.ent:acfFireRate() / (maxqueue - 1), 0, function()
+                    local queue = self.turret.queue
+                    local gun = self.turret.guns[queue]
+                    gun:Fire()
+                    self.turret.queue = queue % maxqueue + 1
+                end)
+                return
             end
-            net.send(ply)
+
+            self:Fire(true)
+
         elseif key == IN_KEY.RELOAD then
             ent:acfReload()
         end
+    else
+        if key == self.firekey then
+            timer.stop(table.address(self))
+            timer.stop(table.address(self) .. "count")
+            self.ent:acfFire(0)
+        end
     end
 end
-function Gun:initialize(name, firekey, camera)
+
+function Gun:Fire(nostop)
+
+    if self.ent:acfReady() then
+        self:UpdateCrates()
+        self.ent:acfFire(1)
+        if not nostop then
+            self.ent:acfFire(0)
+        else
+            timer.create(table.address(self) .. "count", 60 / self.ent:acfFireRate(), 0, function()
+                net.start("Gun_ammo_types_update" .. self._name)
+                local type = self.ent:acfAmmoType()
+                net.writeString(type)
+                local count = self:GetAmmo(type)
+                if count then
+                    net.writeFloat(count)
+                    self.ammotypes[type] = count
+                end
+                net.send(Wire.GetSeat():getDriver())
+                self:NetReloadStart()
+            end)
+        end
+        net.start("Gun_ammo_types_update" .. self._name)
+        local type = self.ent:acfAmmoType()
+        net.writeString(type)
+        local count = self:GetAmmo(type)
+        if count then
+            net.writeFloat(count)
+            self.ammotypes[type] = count
+        end
+        net.send(Wire.GetSeat():getDriver())
+        self:NetReloadStart()
+    end
+end
+
+function Gun:NetReloadStart()
+    net.start("Gun_update_reloading" .. self._name)
+    net.writeFloat(0)
+    net.writeString(self.ent:acfAmmoType())
+    net.send(Wire.GetSeat():getDriver())
+end
+function Gun:initialize(id, name, firekey, camera, turret)
     self:listenInit()
     self.camera = camera
     self.name = "Gun_" .. name
+    self._name = name
+    self.id = id + 1
     self.firekey = firekey
+    self.turret = turret
     Wire.AddInputs({
         [self.name] = "Entity"
     })
@@ -112,28 +182,29 @@ function Gun:IsReloading()
 end
 function Gun:Activate()
     local ent = self.ent
-    if self.isMain then
-        timer.create(table.address(self), 0.1, 0, function()
-            local ply = Wire.GetSeat():getDriver()
-            if not isValid(ply) then
-                return
-            end
+    -- if self.isMain then
+    -- timer.create(table.address(self), 0.1, 0, function()
+    --     local ply = Wire.GetSeat():getDriver()
+    --     if not isValid(ply) then
+    --         return
+    --     end
 
-            if self:IsReloading() then
-                self.reloading = true
-                net.start("Gun_update_reloading")
-                net.writeFloat(ent:acfReloadProgress())
-                net.writeString(ent:acfAmmoType())
-                net.send(ply)
-            elseif self.reloading then
-                self.reloading = false
-                net.start("Gun_update")
-                net.writeString(ent:acfAmmoType())
-                net.send(ply)
-                self:onReloaded()
-            end
-        end)
-    end
+    --     if self:IsReloading() then
+    --         self.reloading = true
+    --         net.start("Gun_update_reloading" .. self._name)
+    --         net.writeFloat(ent:acfReloadProgress())
+    --         net.writeString(ent:acfAmmoType())
+    --         net.send(ply)
+    --     elseif self.reloading then
+    --         self.reloading = false
+    --         net.start("Gun_update" .. self._name)
+    --         net.writeString(ent:acfAmmoType())
+    --         net.send(ply)
+    --         self:onReloaded()
+    --     end
+    -- end)
+
+    -- end
     local tbl = table.getKeys(self.ammotypesEnt)
     table.sort(tbl, function(a, b)
         return ammoPriority[a] < ammoPriority[b]
@@ -145,6 +216,7 @@ function Gun:onReloaded()
 end
 
 function Gun:SelectAmmo(ammoName)
+
     if self.selectedAmmo == ammoName then
         if ammoName == self.ent:acfAmmoType() then
             return
@@ -156,6 +228,9 @@ function Gun:SelectAmmo(ammoName)
     if not self.ammotypesEnt[ammoName] then
         return
     end
+    self:UpdateCrates()
+end
+function Gun:UpdateCrates()
     for type, crates in next, self.ammotypesEnt do
         for k, crate in next, crates do
             crate:acfSetActive(type == self.selectedAmmo)
@@ -174,20 +249,26 @@ function Gun:GetAmmoTypes()
             table.insert(self.ammotypesEnt[type], crate)
         end
     end
+    hook.add("CameraActivated", table.address(self), function(ply)
+        if not self.selectedAmmo then
+            return
+        end
+        net.start("Gun_ammo_types" .. self._name)
+        net.writeTable(self.ammotypes)
+        net.writeString(self.ent:acfAmmoType())
+        net.writeString(self.selectedAmmo)
+        net.writeFloat(self.ent:acfReloadProgress())
+        net.send(ply)
 
-    if self.isMain then
-        hook.add("CameraActivated", table.address(self), function(ply)
-            if not self.selectedAmmo then
-                return
-            end
-            net.start("Gun_ammo_types")
-            net.writeTable(self.ammotypes)
-            net.writeString(self.ent:acfAmmoType())
-            net.writeString(self.selectedAmmo)
-            net.writeFloat(self.ent:acfReloadProgress())
-            net.send(ply)
-        end)
-    end
+        net.start("Gun_update_reloading" .. self._name)
+        net.writeFloat(self.ent:acfReloadProgress())
+        net.writeString(self.ent:acfAmmoType())
+        net.send(ply)
+
+        net.start("Gun_update_firerate" .. self._name)
+        net.writeFloat(self.ent:acfFireRate())
+        net.send(ply)
+    end)
 end
 function Gun:GetAmmo(type)
     local ammo = 0
@@ -210,7 +291,7 @@ end
 --     return target - Vector(0, 0, Pos / game.getTickInterval()) - self:getPos()
 -- end
 
-local Feet_to_Meters = 3.280839895
+-- local Feet_to_Meters = 3.280839895
 function Gun:GetPredict(target, enttarget)
     if not self.ent:isValid() then
         return
@@ -235,9 +316,20 @@ end
 function Gun:getPos()
     return self.ent:getMassCenterW()
 end
+function Gun:Queued()
+    self.queued = true
+    return self
+end
 
 local Turret = class("Turret", Wire)
+Turret:include(Sync)
 
+function Turret:onNetReady(ply)
+    net.start("InitializeObject")
+    net.writeString("Turret")
+    net.writeTable({self.id or ""})
+    net.send(ply)
+end
 function Turret:onPortsInit()
     local Vaxis = Wire["GetVAxis" .. self.id]()
     local Haxis = Wire["GetHAxis" .. self.id]()
@@ -245,18 +337,21 @@ function Turret:onPortsInit()
         return
     end
     self.parent = self._base.GetBase and self._base:GetBase() or self._base
-        local ang = Angle(0, -90, 0)
+    local ang = Angle(0, -90, 0)
 
-        self.HAxisHolo = hologram.create(Haxis:getPos(), ang, "models/sprops/cuboids/height06/size_1/cube_6x6x6.mdl", Vector(.2, .2, 5))
-        self.VAxisHolo = hologram.create(Vaxis:getPos(), ang, "models/sprops/cuboids/height06/size_1/cube_6x6x6.mdl", Vector(.2, 5, .2))
+    self.HAxisHolo = hologram.create(Haxis:getPos(), ang, "models/sprops/cuboids/height06/size_1/cube_6x6x6.mdl", Vector(.2, .2, 5))
+    self.VAxisHolo = hologram.create(Vaxis:getPos(), ang, "models/sprops/cuboids/height06/size_1/cube_6x6x6.mdl", Vector(.2, 5, .2))
 
-        self.VAxisHolo:setParent(self.HAxisHolo)
-        self.HAxisHolo:setParent(self.parent)
-        Vaxis:setParent(self.VAxisHolo)
-        Haxis:setParent(self.HAxisHolo)
-    
-    for gun, getter in next, self.guns do
-        local ent = Wire[getter]()
+    self.VAxisHolo:setParent(self.HAxisHolo)
+    self.HAxisHolo:setParent(self.parent)
+    Vaxis:setParent(self.VAxisHolo)
+    Haxis:setParent(self.HAxisHolo)
+
+    for _, gun in next, self.guns do
+        local ent = Wire["Get" .. gun.name]()
+        if not isValid(ent) then
+            return
+        end
         ent:setParent(Vaxis)
         ent:setNocollideAll(true)
     end
@@ -280,6 +375,7 @@ function Turret:initialize(base, camera, id, config)
     self.guns = {}
     self.lasthitpos = zero
     self.lastgunpos = zero
+    self.queue = 1
     Wire.AddInputs({
         ["VAxis" .. id] = "Entity",
         ["HAxis" .. id] = "Entity",
@@ -305,12 +401,16 @@ function Turret:Activate()
 end
 function Turret:AddGun(name, key)
     local GunName = name .. self.id
-    local gun = Gun(name .. self.id, key, self.camera)
+    self.lastkey = key or self.lastkey
+
+    local gun = Gun(table.count(self.guns), GunName, self.lastkey, self.camera, self)
     if not self.firstgun then
         self.firstgun = gun
         gun.isMain = true
     end
-    self.guns[gun] = "GetGun_" .. name .. self.id
+    table.insert(self.guns, gun)
+
+    return gun
 end
 local min, abs, acos, deg, math_nlerpQuaternion = math.min, math.abs, math.acos, math.deg, math.nlerpQuaternion
 local function Quat_Angle(a, b)

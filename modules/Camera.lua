@@ -1,15 +1,16 @@
 ---@name Camera
 ---@shared
 ---@author kekobka
----@include ../Wire.lua
 local Camera
 
 local CAMERA_OFFSET = Vector(0, 0, 150)
 local CAMERA_OFFSETSCOPE = Vector(0, 0, 150)
 local CAMERA_DISTANCE = 300
+
+ISDRIVER = false
 CAMERA_ZOOMED = false
+
 if SERVER then
-    local Wire = require("../Wire.lua")
     Camera = class("Camera", Wire)
     Wire.AddOutputs({
         EyeVector = Vector(0, 0, 0),
@@ -94,6 +95,7 @@ else
         self.zoom = 15
     end
     function Camera:start()
+        ISDRIVER = true
         self.zoom = 15
         self.forward = self.body:getForward()
         self.yaw = math.deg(math.atan2(self.forward[2], self.forward[1]))
@@ -155,6 +157,7 @@ else
     end
 
     function Camera:stop()
+        ISDRIVER = false
         hook.remove("mousemoved", "camera")
         hook.remove("mouseWheeled", "camera")
         hook.remove("inputpressed", "camera")
