@@ -72,7 +72,9 @@ function Movement:Activate()
             end
             local lvl = 0
             for _, tank in next, self.fueltanks do
-                lvl = lvl + tank:acfFuelLevel()
+                if isValid(tank) then
+                    lvl = lvl + tank:acfFuelLevel()
+                end
             end
             lvl = lvl / #self.fueltanks
             net.start("movement.FuelLevel")
@@ -117,19 +119,23 @@ function Movement:KeyPress(driver, key, pressed)
     self.anymove = (leftinput > 0 and true) or (rightinput > 0 and true)
     if self.anymove then
         for k, v in next, self.engines do
-            v:acfSetThrottle(100)
+            if isValid(v) then
+                v:acfSetThrottle(100)
+            end
         end
     end
 
     for case, left in next, self.links.cases do
-        local i = self.input[left] or 0
-        if i == 0 then
-            case:acfBrake(50)
-            case:acfClutch(1)
-        else
-            case:acfBrake(0)
-            case:acfClutch(0)
-            case:acfShift(i)
+        if isValid(case) then
+            local i = self.input[left] or 0
+            if i == 0 then
+                case:acfBrake(50)
+                case:acfClutch(1)
+            else
+                case:acfBrake(0)
+                case:acfClutch(0)
+                case:acfShift(i)
+            end
         end
     end
 end

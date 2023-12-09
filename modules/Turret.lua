@@ -128,6 +128,10 @@ function Gun:Fire(nostop)
             self.ent:acfFire(0)
         else
             timer.create(table.address(self) .. "count", 60 / self.ent:acfFireRate(), 0, function()
+                local ply = Wire.GetSeat():getDriver()
+                if not isValid(ply) then
+                    return
+                end
                 net.start("Gun_ammo_types_update" .. self._name)
                 local type = self.ent:acfAmmoType()
                 net.writeString(type)
@@ -140,6 +144,10 @@ function Gun:Fire(nostop)
                 self:NetReloadStart()
             end)
         end
+        local ply = Wire.GetSeat():getDriver()
+        if not isValid(ply) then
+            return
+        end
         net.start("Gun_ammo_types_update" .. self._name)
         local type = self.ent:acfAmmoType()
         net.writeString(type)
@@ -148,15 +156,26 @@ function Gun:Fire(nostop)
             net.writeFloat(count)
             self.ammotypes[type] = count
         end
-        net.send(Wire.GetSeat():getDriver())
+        net.send()
         self:NetReloadStart()
     end
 end
 
-function Gun:NetReloadStart()
+function Gun:NetReloadStart(unload)
     net.start("Gun_update_reloading" .. self._name)
     net.writeFloat(0)
     net.writeString(self.ent:acfAmmoType())
+    if unload then
+        local reloadtime = 60 / self.ent:acfFireRate()
+        local unloadtime = reloadtime / 2
+        if not self.ent:acfReady() then
+            unloadtime = math.min(unloadtime, math.max(reloadtime - reloadtime * (1 - self.ent:acfReloadProgress()), 0) )
+        end
+        net.writeFloat(unloadtime)
+    else
+        net.writeFloat(0)
+    end
+    
     net.send(Wire.GetSeat():getDriver())
 end
 function Gun:initialize(id, name, firekey, camera, type, turret)
@@ -187,29 +206,7 @@ function Gun:IsReloading()
 end
 function Gun:Activate()
     local ent = self.ent
-    -- if self.isMain then
-    -- timer.create(table.address(self), 0.1, 0, function()
-    --     local ply = Wire.GetSeat():getDriver()
-    --     if not isValid(ply) then
-    --         return
-    --     end
 
-    --     if self:IsReloading() then
-    --         self.reloading = true
-    --         net.start("Gun_update_reloading" .. self._name)
-    --         net.writeFloat(ent:acfReloadProgress())
-    --         net.writeString(ent:acfAmmoType())
-    --         net.send(ply)
-    --     elseif self.reloading then
-    --         self.reloading = false
-    --         net.start("Gun_update" .. self._name)
-    --         net.writeString(ent:acfAmmoType())
-    --         net.send(ply)
-    --         self:onReloaded()
-    --     end
-    -- end)
-
-    -- end
     local tbl = table.getKeys(self.ammotypesEnt)
     table.sort(tbl, function(a, b)
         return ammoPriority[a] < ammoPriority[b]
@@ -227,7 +224,8 @@ function Gun:SelectAmmo(ammoName)
             return
         end
         self.ent:acfUnload()
-        self.ent:acfReload()
+        self:NetReloadStart(true)
+        -- self.ent:acfReload()
     end
     self.selectedAmmo = ammoName
     if not self.ammotypesEnt[ammoName] then
@@ -269,6 +267,7 @@ function Gun:GetAmmoTypes()
         net.start("Gun_update_reloading" .. self._name)
         net.writeFloat(self.ent:acfReloadProgress())
         net.writeString(self.ent:acfAmmoType())
+        net.writeFloat(0)
         net.send(ply)
 
         net.start("Gun_update_firerate" .. self._name)

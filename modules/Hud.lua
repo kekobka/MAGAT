@@ -1,7 +1,6 @@
 ---@name Hud
 ---@shared
 ---@author kekobka
-
 local Hud = class("Hud")
 if CLIENT then
     STYPES = {
@@ -163,6 +162,11 @@ if CLIENT then
             net.receive("Gun_update_reloading" .. name, function()
                 gundata.reloadProgress = net.readFloat()
                 gundata.usingAmmo = net.readString()
+                local unloadtime = net.readFloat()
+                if unloadtime > 0 then
+                    gundata.reloadProgress = gundata.reloadProgress - unloadtime * gundata.fireRate
+                    print(gundata.reloadProgress)
+                end
             end)
             net.receive("Gun_ammo_types" .. name, function()
                 local usedAmmoTypes = net.readTable()
@@ -173,8 +177,8 @@ if CLIENT then
                 local adder = STYPES_t[gundata.type]
                 gundata.ammotypes = {}
                 for t, count in next, usedAmmoTypes do
-                    
-                    local type = ammotypesdata[t] and "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/shelltypes/".. adder .. t .. ".png" or ""
+
+                    local type = ammotypesdata[t] and "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/shelltypes/" .. adder .. t .. ".png" or ""
                     if type then
                         local a = isstring(type) and getMaterial(type) or type
                         ammotypesdata[t] = a
@@ -211,7 +215,7 @@ if CLIENT then
                     end
                     if gundata.usingAmmo == data.name then
                         render.setRGBA(0, 255, 0, 255)
-                        render.drawRectFast(cX - 29 + x * 60, cY - 2, 58, gundata.reloadProgress * 58)
+                        render.drawRectFast(cX - 29 + x * 60, cY - 2, 58, math.max(gundata.reloadProgress, 0) * 58)
                         render.setRGBA(255, 255, 255, 255)
                     end
                     render.drawTexturedRectFast(cX - 27 + x * 60, cY, 54, 54)
