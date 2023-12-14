@@ -74,7 +74,7 @@ function Gun:onPortsInit()
         self:SelectAmmo(newAmmo)
     end)
     self:Activate()
-    self.crew = self.ent:acfGetCrew()
+    self.crew = self.ent:acfIsGun() and self.ent:acfGetCrew() or {}
     if DEBUG then
         print("DEBUG " .. self.name)
         print("Ammo boxes:")
