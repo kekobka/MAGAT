@@ -260,7 +260,7 @@ if CLIENT then
     hook.add("hudshoulddraw", "Hud", function(s)
         return hide[s]
     end)
-    -- local speed, lerp, lasttarget = 0, Vector()
+    local speed = 0
     local lastframe, timer_realtime = 0, timer.realtime
     hook.add("drawhud", "Hud", function()
         local w, h = render.getResolution()
@@ -285,52 +285,33 @@ if CLIENT then
             local s = 512 * scale
             render.drawTexturedRectFast(w / 2 - s / 2, h / 2 - s / 2, s, s)
         end
-        -- local cX, cY = w / 2, h - 128
-        -- render.setRGBA(255, 255, 255, 255)
-        -- render.setFont(fontRoboto16)
-        -- for i, data in next, ammotypes do
-        --     render.setMaterial(data.mat)
-        --     local x = (i - 1) - (ammmotypesCount - 1) / 2
-        --     if nextUsingAmmo == data.name then
-        --         render.setRGBA(255, 255, 0, 255)
-        --         render.drawRectFast(cX - 29 + x * 60, cY - 2, 58, 58)
-        --         render.setRGBA(255, 255, 255, 255)
-        --     end
-        --     if usingAmmo == data.name then
-        --         render.setRGBA(0, 255, 0, 255)
-        --         render.drawRectFast(cX - 29 + x * 60, cY - 2, 58, reloadProgress * 58)
-        --         render.setRGBA(255, 255, 255, 255)
-        --     end
-        --     render.drawTexturedRectFast(cX - 27 + x * 60, cY, 54, 54)
-        --     render.drawSimpleText(cX + x * 60, cY, data.name, 1, 2)
-        --     render.drawSimpleText(cX + x * 60, cY + 54, data.count, 1)
-        -- end
 
-        -- speed = speed * 0.95 + math.floor(base:getVelocity():getLength() * 1.905 / 100000 * 3600) * 0.05
 
-        -- render.setFont(fontRoboto48)
-        -- local spd = tostring(math.min(math.floor(speed), 999))
-        -- local str = string.rep("0", 3 - #tostring(spd)) .. spd
-        -- render.setRGBA(51, 51, 51, 255)
+         speed = speed * 0.95 + math.floor(base:getVelocity():getLength() * 1.905 / 100000 * 3600) * 0.05
 
-        -- for k = 1, 3 do
-        --     local num = string.sub(str, k, k)
-        --     if num ~= "0" then
-        --         render.setRGBA(255, 255, 255, 250)
-        --     end
-        --     render.drawSimpleText(w - 300 + k * 46, cY, num)
-        -- end
+         render.setFont(fontRoboto48)
+         local spd = tostring(math.min(math.floor(speed), 999))
+         local str = string.rep("0", 3 - #tostring(spd)) .. spd
+         render.setRGBA(51, 51, 51, 255)
 
-        -- render.setRGBA(255, 255, 255, 255)
-        -- render.setFont(fontIcons)
-        -- local lvl = math.round(fuellvl * 10)
-        -- if lvl == 10 then
-        --     render.drawSimpleText(w - 250, cY - 60, string.utf8char(0xE83F))
-        -- else
-        --     local gb = 255 - ((5 - lvl) * 255)
-        --     render.setRGBA(255, gb, gb, 255)
-        --     render.drawSimpleText(w - 250, cY - 60, string.utf8char(0xE850 + lvl))
-        -- end
+         for k = 1, 3 do
+             local num = string.sub(str, k, k)
+             if num ~= "0" then
+                 render.setRGBA(255, 255, 255, 250)
+             end
+             render.drawSimpleText(w - 300 + k * 46, cY, num)
+         end
+
+         render.setRGBA(255, 255, 255, 255)
+         render.setFont(fontIcons)
+         local lvl = math.round(fuellvl * 10)
+         if lvl == 10 then
+             render.drawSimpleText(w - 250, cY - 60, string.utf8char(0xE83F))
+         else
+             local gb = 255 - ((5 - lvl) * 255)
+             render.setRGBA(255, gb, gb, 255)
+             render.drawSimpleText(w - 250, cY - 60, string.utf8char(0xE850 + lvl))
+         end
     end)
 
     hook.add("inputReleased", "HUD.Input", function(key)
