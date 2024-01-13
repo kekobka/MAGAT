@@ -5,9 +5,9 @@
 
 DEBUG = true
 if SERVER then
-    ---@include Wire.lua
+    ---@include https://github.com/kekobka/MAGAT/raw/main/Wire.lua as Wire.lua
     Wire = require("Wire.lua")
-    ---@include Sync.lua
+    ---@include https://github.com/kekobka/MAGAT/raw/main/Sync.lua as Sync.lua
     Sync = require("Sync.lua")
 end
 
@@ -15,7 +15,7 @@ end
 ---@include https://github.com/kekobka/MAGAT/raw/main/modules/Hud.lua as Hud
 ---@include https://github.com/kekobka/MAGAT/raw/main/modules/Movement.lua as Movement
 ---@include https://github.com/kekobka/MAGAT/raw/main/modules/Turret.lua as Turret
-print(require("Hud"))
+
 modules = {
     Camera = require("Camera"),
     Hud = require("Hud"),
