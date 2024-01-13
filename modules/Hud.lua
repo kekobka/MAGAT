@@ -286,32 +286,31 @@ if CLIENT then
             render.drawTexturedRectFast(w / 2 - s / 2, h / 2 - s / 2, s, s)
         end
 
+        speed = speed * 0.95 + math.floor(base:getVelocity():getLength() * 1.905 / 100000 * 3600) * 0.05
+        local cY = h - 128
+        render.setFont(fontRoboto48)
+        local spd = tostring(math.min(math.floor(speed), 999))
+        local str = string.rep("0", 3 - #tostring(spd)) .. spd
+        render.setRGBA(51, 51, 51, 255)
 
-         speed = speed * 0.95 + math.floor(base:getVelocity():getLength() * 1.905 / 100000 * 3600) * 0.05
+        for k = 1, 3 do
+            local num = string.sub(str, k, k)
+            if num ~= "0" then
+                render.setRGBA(255, 255, 255, 250)
+            end
+            render.drawSimpleText(w - 300 + k * 46, cY, num)
+        end
 
-         render.setFont(fontRoboto48)
-         local spd = tostring(math.min(math.floor(speed), 999))
-         local str = string.rep("0", 3 - #tostring(spd)) .. spd
-         render.setRGBA(51, 51, 51, 255)
-
-         for k = 1, 3 do
-             local num = string.sub(str, k, k)
-             if num ~= "0" then
-                 render.setRGBA(255, 255, 255, 250)
-             end
-             render.drawSimpleText(w - 300 + k * 46, cY, num)
-         end
-
-         render.setRGBA(255, 255, 255, 255)
-         render.setFont(fontIcons)
-         local lvl = math.round(fuellvl * 10)
-         if lvl == 10 then
-             render.drawSimpleText(w - 250, cY - 60, string.utf8char(0xE83F))
-         else
-             local gb = 255 - ((5 - lvl) * 255)
-             render.setRGBA(255, gb, gb, 255)
-             render.drawSimpleText(w - 250, cY - 60, string.utf8char(0xE850 + lvl))
-         end
+        render.setRGBA(255, 255, 255, 255)
+        render.setFont(fontIcons)
+        local lvl = math.round(fuellvl * 10)
+        if lvl == 10 then
+            render.drawSimpleText(w - 250, cY - 60, string.utf8char(0xE83F))
+        else
+            local gb = 255 - ((5 - lvl) * 255)
+            render.setRGBA(255, gb, gb, 255)
+            render.drawSimpleText(w - 250, cY - 60, string.utf8char(0xE850 + lvl))
+        end
     end)
 
     hook.add("inputReleased", "HUD.Input", function(key)
