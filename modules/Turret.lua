@@ -1,5 +1,5 @@
 ---@name Turret
----@server
+---@shared
 ---@author kekobka
 local zero, trace_line, math_clamp = Vector(), trace.line, math.clamp
 

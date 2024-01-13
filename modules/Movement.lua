@@ -1,5 +1,5 @@
 ---@name Movement
----@server
+---@shared
 ---@author kekobka
 local Movement = class("Movement", Wire)
 function Movement:onPortsInit()

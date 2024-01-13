@@ -1,7 +1,7 @@
 ---@name MAGAT
 --- Modular Integrated General Armored Technology
 ---@author kekobka
----@includedir modules
+--- @includedir modules
 
 DEBUG = true
 if SERVER then
@@ -10,10 +10,22 @@ if SERVER then
     ---@include Sync.lua
     Sync = require("Sync.lua")
 end
-modules = {}
-for k, v in next, requiredir("modules") do
-    modules[v.name] = v
-end
+
+---@include https://github.com/kekobka/MAGAT/raw/main/modules/Camera.lua as Camera
+---@include https://github.com/kekobka/MAGAT/raw/main/modules/Hud.lua as Hud
+---@include https://github.com/kekobka/MAGAT/raw/main/modules/Movement.lua as Movement
+---@include https://github.com/kekobka/MAGAT/raw/main/modules/Turret.lua as Turret
+print(require("Hud"))
+modules = {
+    Camera = require("Camera"),
+    Hud = require("Hud"),
+    Movement = require("Movement"),
+    Turret = require("Turret"),
+}
+
+-- for k, v in next, requiredir("modules") do
+--     modules[v.name] = v
+-- end
 
 if SERVER then
 
