@@ -25,6 +25,7 @@ if CLIENT then
     local fontRoboto48 = render.createFont("Roboto", 96, 500, true, false, true, false, 0, false, 0)
     local fontIcons = render.createFont("Segoe MDL2 Assets", 96, 500, true, false, false, false, false, true)
     local base = entity(0)
+
     local ammoPriority = {
         ["APFSDS"] = 1,
         ["APDS"] = 2,
@@ -69,12 +70,25 @@ if CLIENT then
     }
 
     local _materials = {}
+    if hasPermission("file.write") then
+        file.createDir("magat")
+    end
     local function getMaterial(url)
         if _materials[url] then
             return _materials[url]
         end
+        if hasPermission("file.exists") then
+            local path = "data/sf_filedata/magat/" .. url:match("content/[^%s]+")
+            if file.exists(path) then
+                url = path
+            end
+        end
         _materials[url] = render.createMaterial(url, function(_, _, _, _, w)
-            w(0, 0, 1024, 1024)
+            if w then
+                w(0, 0, 1024, 1024)
+            else
+                _materials[url] = ""
+            end
         end)
         return _materials[url]
     end
