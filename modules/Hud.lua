@@ -78,9 +78,10 @@ if CLIENT then
             return _materials[url]
         end
         if hasPermission("file.exists") then
-            local path = "data/sf_filedata/magat/" .. url:match("content/[^%s]+")
+            local path = "magat/" .. url:match("content/[^%s]+")
             if file.exists(path) then
-                url = path
+                _materials[url] = material.createFromImage("data/sf_filedata/" .. path, "alphatest noclamp")
+                return _materials[url]
             end
         end
         _materials[url] = render.createMaterial(url, function(_, _, _, _, w)

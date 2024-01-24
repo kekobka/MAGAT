@@ -1,27 +1,21 @@
 ---@name MAGAT
 --- Modular Integrated General Armored Technology
 ---@author kekobka
---- @includedir modules
+---@includedir modules
 
 DEBUG = true
 if SERVER then
-    ---@include https://github.com/kekobka/MAGAT/raw/main/Wire.lua as Wire.lua
+    ---@include Wire.lua
     Wire = require("Wire.lua")
-    ---@include https://github.com/kekobka/MAGAT/raw/main/Sync.lua as Sync.lua
+    ---@include Sync.lua
     Sync = require("Sync.lua")
 end
 
----@include https://github.com/kekobka/MAGAT/raw/main/modules/Camera.lua as Camera
----@include https://github.com/kekobka/MAGAT/raw/main/modules/Hud.lua as Hud
----@include https://github.com/kekobka/MAGAT/raw/main/modules/Movement.lua as Movement
----@include https://github.com/kekobka/MAGAT/raw/main/modules/Turret.lua as Turret
+modules = {}
 
-modules = {
-    Camera = require("Camera"),
-    Hud = require("Hud"),
-    Movement = require("Movement"),
-    Turret = require("Turret"),
-}
+for k, v in next, requiredir("modules") do
+    modules[v.name] = v
+end
 
 if SERVER then
 
@@ -47,7 +41,7 @@ if SERVER then
 
     -- turret:AddGun(name? = "", fire key? = lastkey, enum STYPES? = STYPES.CANNON)
     turret:AddGun("Main", IN_KEY.ATTACK)
-    turret:AddGun("Turret", IN_KEY.ATTACK2, STYPES.MACHINEGUN)
+    -- turret:AddGun("Turret", IN_KEY.ATTACK2, STYPES.MACHINEGUN)
     
     Wire.AddInputs({
         Seat = "Entity",
