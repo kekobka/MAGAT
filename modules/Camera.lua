@@ -140,6 +140,8 @@ else
                     CAMERA_ZOOMED = false
                     lastdist, self.dist = self.dist, lastdist
                 end
+            elseif v == KEY.N and player() == owner() then
+                concmd("flir_toggle")
             end
         end)
         hook.add("calcview", "camera", function(tbl)
