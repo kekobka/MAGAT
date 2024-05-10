@@ -327,7 +327,7 @@ function Turret:initialize(base, camera, id, config)
 	self.lastgunpos = zero
 	self.queue = 1
 	Wire.AddInputs({["VAxis" .. id] = "Entity", ["HAxis" .. id] = "Entity", ["Base"] = "Entity"})
-	Wire.AddInputs({["HitPos" .. id] = self.lasthitpos, ["GunPos" .. id] = self.lastgunpos})
+	Wire.AddOutputs({["HitPos" .. id] = self.lasthitpos, ["GunPos" .. id] = self.lastgunpos})
 end
 function Turret:Activate()
 	timer.create(table.address(self), 120 / 1000, 0, function()
