@@ -389,6 +389,8 @@ function Turret:Think()
 	local Target, Reverse = gun:GetPredict(hitpos, holding_ent)
 	self.lasthitpos = hitpos
 	self.lastgunpos = gunpos
+	Wire["Set" .. "HitPos" .. self.id](self.lasthitpos)
+	Wire["Set" .. "GunPos" .. self.id](self.lastgunpos)
 	local target = (Target - gunpos):getAngle()
 	local HAxisHolo = self.HAxisHolo
 	local VAxisHolo = self.VAxisHolo
