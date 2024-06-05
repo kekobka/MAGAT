@@ -381,7 +381,7 @@ function Turret:Think()
 			hitpos = self.holding_pos
 		end
 	else
-		hitpos = trace_line(EyePos, EyePos + EyeVector * 65565, nil, nil, COLLISION_GROUP.PROJECTILE).HitPos
+		hitpos = trace_line(EyePos, EyePos + EyeVector * 65565, nil, nil).HitPos
 	end
 	local gun = self.firstgun
 	local gunpos = gun:getPos()
