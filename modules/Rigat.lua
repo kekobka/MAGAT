@@ -405,6 +405,13 @@ function Turret:Think()
 	local target = (hitpos - gunpos):getAngle()
 	local HAxisHolo = self.HAxisHolo
 	local VAxisHolo = self.VAxisHolo
+	
+	local driver = Wire.GetSeat():getDriver()
+	if driver:isValid() then
+		net.start("Turret" .. self.id)
+		net.writeVector(hitpos)
+		net.send(driver, true)
+	end
 	if self.flying then
 		return
 	end
@@ -417,12 +424,6 @@ function Turret:Think()
 	rotate(HAxisHolo, base:localToWorldAngles(Angle(0, math_clamp(HAxisLocalTarget, -config.minY, config.maxY), 0)))
 	rotate(VAxisHolo, HAxisHolo:localToWorldAngles(Angle(math_clamp(VAxisLocalTarget, -config.elevation, config.depression), 0, 0)))
 
-	local driver = Wire.GetSeat():getDriver()
-	if driver:isValid() then
-		net.start("Turret" .. self.id)
-		net.writeVector(target)
-		net.send(driver, true)
-	end
 end
 
 function Turret:GetBase()
