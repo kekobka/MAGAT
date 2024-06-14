@@ -12,10 +12,7 @@ CAMERA_ZOOMED = false
 
 if SERVER then
 	Camera = class("Camera", Wire)
-	Wire.AddOutputs({
-		EyeVector = Vector(0, 0, 0),
-		EyePos = Vector(),
-	})
+	Wire.AddOutputs({EyeVector = Vector(0, 0, 0), EyePos = Vector()})
 	function Camera:onPortsInit()
 		local base = Wire.GetBase()
 		if not isValid(base) then
@@ -63,6 +60,9 @@ if SERVER then
 		self.user = nil
 
 		net.receive("eye", function(len, pl)
+			if not isValid(self.body) then
+				return
+			end
 			self.eye = net.readVector()
 			self.offset = net.readVector()
 			Wire.SetEyePos(self.body:localToWorld(self.offset))
@@ -78,6 +78,18 @@ if SERVER then
 			Wire.SetEyePos(self.body:localToWorld(self.offset))
 		end)
 	end
+	function Camera:updateBody(body)
+		self.body = body
+		self.offset = CAMERA_OFFSET
+		self.eye = self.body:getRight()
+		self._eye = self.eye
+		self.pos = self.body:localToWorld(self.offset)
+		self.user = nil
+
+		net.start("updateBody")
+		net.writeEntity(self.body)
+		net.send()
+	end
 	function Camera:setSeat(seat)
 		self.seat = seat
 	end
@@ -92,6 +104,14 @@ else
 		self.forward = self.body:getForward()
 		self.eye = self.forward
 		self.zoom = 15
+	end
+	function Camera:setBody(body)
+		self.body = body
+		self.forward = self.body:getForward()
+		self.eye = self.forward
+		self.yaw = math.deg(math.atan2(self.forward[2], self.forward[1]))
+		self.pitch = math.deg(math.asin(self.forward[3] / math.sqrt(self.forward[2] ^ 2 + self.forward[1] ^ 2)))
+
 	end
 	function Camera:start()
 		ISDRIVER = true
@@ -144,16 +164,16 @@ else
 			end
 		end)
 		hook.add("calcview", "camera", function(tbl)
+			if not isValid(self.body) then
+				return
+			end
+
 			local up = self.body:getUp()
 			up = (up - self.forward * self.forward:dot(up)):getNormalized()
 			local right = (self.forward):cross(up)
 			self.matrix:setForward(self.forward)
 			self.pos = self.body:localToWorld(self.offset) - self.matrix:getForward() * self.dist
-			return {
-				origin = self.pos,
-				angles = self.matrix:getAngles(),
-				fov = 90 / (CAMERA_ZOOMED and self.zoom or 1),
-			}
+			return {origin = self.pos, angles = self.matrix:getAngles(), fov = 90 / (CAMERA_ZOOMED and self.zoom or 1)}
 		end)
 	end
 
@@ -168,14 +188,18 @@ else
 	end
 	net.start("initCAMERA")
 	net.send()
+	local mycamera
 	net.receive("initCAMERA", function()
-		local mycamera = Camera:new(net.readEntity())
+		mycamera = Camera:new(net.readEntity())
 		hook.add("hudconnected", "camera", function()
 			mycamera:start()
 		end)
 		hook.add("huddisconnected", "camera", function()
 			mycamera:stop()
 		end)
+	end)
+	net.receive("updateBody", function()
+		mycamera:setBody(net.readEntity())
 	end)
 end
 

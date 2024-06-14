@@ -16,11 +16,7 @@ end
 function Movement:initialize()
 	self:listenInit()
 	print(Color(255, 255, 255), "Module: ", Color(255, 0, 255), "Movement", Color(0, 255, 0), " Initialized!")
-	Wire.AddInputs({
-		["Base"] = "Entity",
-		["Engine"] = "Entity",
-		["Seat"] = "Entity",
-	})
+	Wire.AddInputs({["Base"] = "Entity", ["Engine"] = "Entity", ["Seat"] = "Entity"})
 	self.links = {}
 	self.engines = {}
 	self.fueltanks = {}
@@ -112,10 +108,7 @@ function Movement:Activate()
 end
 function Movement:KeyPress(driver, key, pressed)
 	local leftinput, rightinput = self:HandleInput(driver, key, pressed)
-	self.input = {
-		[true] = leftinput,
-		[false] = rightinput,
-	}
+	self.input = {[true] = leftinput, [false] = rightinput}
 	self.anymove = (leftinput > 0 and true) or (rightinput > 0 and true)
 	if self.anymove then
 		for k, v in next, self.engines do
@@ -212,27 +205,26 @@ function Movement:FindLinks(ent, linkedto, tbl)
 		return true
 	end
 	if not tbl then
-		return {
-			[ent] = self:FindLinks(ent, nil, {}),
-		}
+		return {[ent] = self:FindLinks(ent, nil, {})}
 	end
 	local links = {}
 	for k, wheel in next, ent:acfLinks() do
 		if not isValid(wheel) then
-			continue
+			goto c
 		end
 		if wheel:acfIsFuel() then
 			table.insert(self.fueltanks, wheel)
-			continue
+			goto c
 		end
 		if wheel == linkedto then
-			continue
+			goto c
 		end
 		if wheel:acfIsEngine() then
 			table.insert(self.engines, wheel)
-			continue
+			goto c
 		end
 		links[wheel] = self:FindLinks(wheel, ent, tbl)
+		::c::
 	end
 	return table.count(links) > 0 and links or false
 end

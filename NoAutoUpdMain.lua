@@ -35,10 +35,11 @@ if SERVER then
 		maxY = 0,
 	}
 
-	local turret = modules.Turret(Base, Camera, nil, turretConfig)
+	local rigat = modules.Rigat(Base, Camera, nil, turretConfig)
+	rigat:AddGun("Main", IN_KEY.ATTACK)
+    rigat:AddGun("Main2", IN_KEY.ATTACK)
 
 	-- turret:AddGun(name? = "", fire key? = lastkey, enum STYPES? = STYPES.CANNON)
-	turret:AddGun("Main", IN_KEY.ATTACK)
 	-- turret:AddGun("Turret", IN_KEY.ATTACK2, STYPES.MACHINEGUN)
 
 	Wire.AddInputs({

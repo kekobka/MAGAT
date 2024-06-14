@@ -3,16 +3,8 @@
 ---@author kekobka
 local Hud = class("Hud")
 if CLIENT then
-	STYPES = {
-		CANNON = 0,
-		AUTOCANNON = 1,
-		MACHINEGUN = 2,
-	}
-	local STYPES_t = {
-		[0] = "",
-		[1] = "ac/",
-		[2] = "mg/",
-	}
+	STYPES = {CANNON = 0, AUTOCANNON = 1, MACHINEGUN = 2}
+	local STYPES_t = {[0] = "", [1] = "ac/", [2] = "mg/"}
 	local OverlayPath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/overlay.png"
 	local ScopePath = "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/table.png"
 
@@ -148,15 +140,7 @@ if CLIENT then
 			end
 		end,
 		["Gun"] = function(name)
-			local gundata = {
-				name = name,
-				usingAmmo = "",
-				nextUsingAmmo = "",
-				reloadProgress = 1,
-				ammotypes = {},
-				ammmotypesCount = 0,
-				fireRate = 0,
-			}
+			local gundata = {name = name, usingAmmo = "", nextUsingAmmo = "", reloadProgress = 1, ammotypes = {}, ammmotypesCount = 0, fireRate = 0}
 			net.receive("Gun_update" .. name, function()
 				gundata.usingAmmo = net.readString()
 			end)
@@ -191,17 +175,11 @@ if CLIENT then
 				local adder = STYPES_t[gundata.type]
 				gundata.ammotypes = {}
 				for t, count in next, usedAmmoTypes do
-					local type = ammotypesdata[t]
-							and "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/shelltypes/" .. adder .. t .. ".png"
-						or ""
+					local type = ammotypesdata[t] and "https://raw.githubusercontent.com/kekobka/MAGAT/main/content/shelltypes/" .. adder .. t .. ".png" or ""
 					if type then
 						local a = isstring(type) and getMaterial(type) or type
 						ammotypesdata[t] = a
-						table.insert(gundata.ammotypes, {
-							name = t,
-							mat = a,
-							count = count,
-						})
+						table.insert(gundata.ammotypes, {name = t, mat = a, count = count})
 					end
 				end
 				table.sort(gundata.ammotypes, function(a, b)
@@ -266,12 +244,7 @@ if CLIENT then
 		end
 	end)
 
-	local hide = {
-		["CHudHealth"] = false,
-		["CHudBattery"] = false,
-		["CHudCrosshair"] = false,
-		["NetGraph"] = false,
-	}
+	local hide = {["CHudHealth"] = false, ["CHudBattery"] = false, ["CHudCrosshair"] = false, ["NetGraph"] = false}
 	hook.add("hudshoulddraw", "Hud", function(s)
 		return hide[s]
 	end)
@@ -346,6 +319,9 @@ if CLIENT then
 		end
 		local gun = guns[activegun]
 		local type = key - 1
+		if not gun then
+			return
+		end
 		if gun.ammotypes[type] then
 			gun.nextUsingAmmo = gun.ammotypes[type].name
 			net.start("gun_ammo_change" .. gun.name)
