@@ -185,7 +185,7 @@ function Gun:Fire()
 	turret.camera:updateBody(ent)
 	Wire.GetSeat():getDriver():setViewEntity(ent)
 	local bomb
-	for k, v in ipairs(ent:getChildren()) do
+	for v in pairs(ent:getChildren()) do
 		if v.acfIsGun and v:acfIsGun() then
 			bomb = v
 			break
@@ -195,7 +195,6 @@ function Gun:Fire()
 		if isValid(bomb) then
 			bomb:acfFire(1)
 		end
-		ent:remove()
 	end)
 	hook.add("Think", table.address(self), function()
 		if not isValid(ent) then
@@ -405,7 +404,7 @@ function Turret:Think()
 	local target = (hitpos - gunpos):getAngle()
 	local HAxisHolo = self.HAxisHolo
 	local VAxisHolo = self.VAxisHolo
-	
+
 	local driver = Wire.GetSeat():getDriver()
 	if driver:isValid() then
 		net.start("Turret" .. self.id)
