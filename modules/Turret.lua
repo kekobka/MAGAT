@@ -301,6 +301,8 @@ function Turret:onPortsInit()
 
 	self.VAxisHolo:setParent(self.HAxisHolo)
 	self.HAxisHolo:setParent(self.parent)
+	self.VAxisHolo:setNoDraw(not DEBUG)
+	self.HAxisHolo:setNoDraw(not DEBUG)
 	Vaxis:setParent(self.VAxisHolo)
 	Haxis:setParent(self.HAxisHolo)
 
