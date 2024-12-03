@@ -154,7 +154,7 @@ function Movement:Think()
 			gbox:acfShiftUp()
 		elseif rpm >= (self.maxPower - 10) and gear < self.numgears - 1 then
 			gbox:acfShiftUp()
-		elseif rpm <= (self.minPower - 10) and gear > 1  then
+		elseif rpm <= (self.midPower - 10) and gear > 1  then
 			gbox:acfShiftDown()
 		end
 	else
