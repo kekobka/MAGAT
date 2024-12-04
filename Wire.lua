@@ -9,13 +9,17 @@ local function accessorFunc(tbl, name, defaultValue, varName)
 	local varName = varName .. "_" .. name
 
 	tbl[varName] = defaultValue
+	if ports[name] then
 	ports[varName] = defaultValue
+	end
 	tbl["Get" .. name] = function(self)
 		return self[varName]
 	end
 	tbl["Set" .. name] = function(self, value)
 		self[varName] = value
-		ports[varName] = value
+		if ports[name] then
+			ports[varName] = value
+		end
 		return value
 	end
 end
