@@ -9,33 +9,33 @@ local function accessorFunc(tbl, name, defaultValue, varName)
 	local varName = varName .. "_" .. name
 
 	tbl[varName] = defaultValue
-	if ports[name] then
+	try(function()
 		ports[varName] = defaultValue
-	end
+	end)
 	tbl["Get" .. name] = function(self)
 		return self[varName]
 	end
 	tbl["Set" .. name] = function(self, value)
 		self[varName] = value
-		if ports[name] then
+		try(function()
 			ports[varName] = value
-		end
+		end)
 		return value
 	end
 end
 local function accessorFuncStatic(name, defaultValue)
 	WireComponent[name] = defaultValue
-	if ports[name] then
+	try(function()
 		ports[name] = defaultValue
-	end
+	end)
 	WireComponent["Get" .. name] = function()
 		return WireComponent[name]
 	end
 	WireComponent["Set" .. name] = function(value)
 		WireComponent[name] = value
-		if ports[name] then
+		try(function()
 			ports[name] = value
-		end
+		end)
 		return value
 	end
 end
