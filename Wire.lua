@@ -21,7 +21,9 @@ local function accessorFunc(tbl, name, defaultValue, varName)
 end
 local function accessorFuncStatic(name, defaultValue)
 	WireComponent[name] = defaultValue
-	ports[name] = defaultValue
+	if ports[name] then
+		ports[name] = defaultValue
+	end
 	WireComponent["Get" .. name] = function()
 		return WireComponent[name]
 	end
