@@ -29,7 +29,9 @@ local function accessorFuncStatic(name, defaultValue)
 	end
 	WireComponent["Set" .. name] = function(value)
 		WireComponent[name] = value
-		ports[name] = value
+		if ports[name] then
+			ports[name] = value
+		end
 		return value
 	end
 end
