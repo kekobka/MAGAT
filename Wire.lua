@@ -10,7 +10,7 @@ local function accessorFunc(tbl, name, defaultValue, varName)
 
 	tbl[varName] = defaultValue
 	if ports[name] then
-	ports[varName] = defaultValue
+		ports[varName] = defaultValue
 	end
 	tbl["Get" .. name] = function(self)
 		return self[varName]
