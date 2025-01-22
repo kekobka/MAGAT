@@ -227,8 +227,8 @@ function Movement:FindLinks(ent, linkedto, tbl)
 				goto c
 			end
 			links[wheel] = self:FindLinks(wheel, ent, tbl)
+			::c::
 		end)
-		::c::
 	end
 	return table.count(links) > 0 and links or false
 end
