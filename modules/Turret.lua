@@ -97,7 +97,7 @@ function Gun:KeyPress(ply, key, pressed)
 		if key == self.firekey then
 			timer.stop(table.address(self))
 			timer.stop(table.address(self) .. "count")
-			self.ent:acfFire(0)
+			self.ent:acfFire(false)
 		end
 	end
 end
@@ -105,9 +105,9 @@ end
 function Gun:Fire(nostop)
 	if self.ent:acfReady() then
 		self:UpdateCrates()
-		self.ent:acfFire(1)
+		self.ent:acfFire(true)
 		if not nostop then
-			self.ent:acfFire(0)
+			self.ent:acfFire(false)
 		else
 			timer.create(table.address(self) .. "count", 60 / self.ent:acfFireRate(), 0, function()
 				local ply = Wire.GetSeat():getDriver()
