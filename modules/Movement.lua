@@ -211,21 +211,23 @@ function Movement:FindLinks(ent, linkedto, tbl)
 	end
 	local links = {}
 	for k, wheel in next, ent:acfLinks() do
-		if not isValid(wheel) then
-			goto c
-		end
-		if wheel:acfIsFuel() then
-			table.insert(self.fueltanks, wheel)
-			goto c
-		end
-		if wheel == linkedto then
-			goto c
-		end
-		if wheel:acfIsEngine() then
-			table.insert(self.engines, wheel)
-			goto c
-		end
-		links[wheel] = self:FindLinks(wheel, ent, tbl)
+		try(function()
+			if not isValid(wheel) then
+				goto c
+			end
+			if wheel:acfIsFuel() then
+				table.insert(self.fueltanks, wheel)
+				goto c
+			end
+			if wheel == linkedto then
+				goto c
+			end
+			if wheel:acfIsEngine() then
+				table.insert(self.engines, wheel)
+				goto c
+			end
+			links[wheel] = self:FindLinks(wheel, ent, tbl)
+		end)
 		::c::
 	end
 	return table.count(links) > 0 and links or false
